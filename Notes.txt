@@ -1,0 +1,14 @@
+Run single test from the command line, use the --testNamePattern or -t flag:
+jest -t 'fix-order-test'
+
+'origin' does not appear to be a git repository so Setup a remote Repo
+git remote add origin <URL to remote repo>
+
+
+npm commands
+npm cache clean --force
+npm rebuild
+npm install
+
+eslint is looking for the jest/globals environment. Add eslint-jest-plugin to your package.json
+npm install eslint-plugin-jest --save-dev
