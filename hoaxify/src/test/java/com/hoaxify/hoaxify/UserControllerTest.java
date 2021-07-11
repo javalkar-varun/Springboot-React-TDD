@@ -44,7 +44,7 @@ public class UserControllerTest {
 	public void postUser_whenUserIsValid_receiveOk() {
 		User user = createValidUser();
 		
-		ResponseEntity<Object> response = testRestTemplate.postForEntity(API_1_0_USERS, user, Object.class);
+		ResponseEntity<Object> response = postSignup(user, Object.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 	}
 
@@ -52,18 +52,39 @@ public class UserControllerTest {
 	public void postUser_whenUserIsValid_receiveSuccessMessage() {
 		User user = createValidUser();
 		
-		ResponseEntity<GenericResponse> response = testRestTemplate.postForEntity(API_1_0_USERS, user, GenericResponse.class);
+		ResponseEntity<GenericResponse> response = postSignup(user, GenericResponse.class);
 		assertThat(response.getBody().getMessage()).isNotNull();
 	}
 	
 	@Test
 	public void postUser_whenUserIsValid_passwordIsHashedInDatabase() {
 		User user = createValidUser();
-		testRestTemplate.postForEntity(API_1_0_USERS, user, Object.class);
+		postSignup(user, GenericResponse.class);
 		List<User> users= userRepository.findAll();
 		User inDB = users.get(0);
 		assertThat(inDB.getPassword()).isNotEqualTo(user.getPassword());
 	}
+	
+	@Test
+	public void postUser_whenUserHasNullUsername_receiveBadRequest() {
+		User user = createValidUser();
+		user.setUsername(null);
+		ResponseEntity<Object> response = postSignup(user, Object.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+	}
+	
+	@Test
+	public void postUser_whenUserHasNullDisplayName_receiveBadRequest() {
+		User user = createValidUser();
+		user.setDisplayName(null);
+		ResponseEntity<Object> response = postSignup(user, Object.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+	}
+	
+	public <T> ResponseEntity<T> postSignup(Object request, Class<T> response) {
+		return testRestTemplate.postForEntity(API_1_0_USERS, request, response);
+	}
+	
 	@Test
 	public void postUser_whenUserIsValid_userSavedToDatabase() {
 		User user = createValidUser();
