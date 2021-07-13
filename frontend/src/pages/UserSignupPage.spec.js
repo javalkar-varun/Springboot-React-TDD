@@ -3,7 +3,8 @@ import {
     render,
     cleanup,
     fireEvent,
-    waitForDomChange
+    waitForDomChange,
+    waitForElement
  } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import { UserSignupPage } from './UserSignupPage';
@@ -227,6 +228,25 @@ describe('UserSignupPage', () => {
             const spinner = queryByText('Loading...'); // loading ... is coming from bootstrap spinner component
 
             expect(spinner).not.toBeInTheDocument();
+        });
+
+        it('display validation error for displayName when error is received for the field', async () => {
+            const actions = {
+                postSignup: jest.fn().mockRejectedValue({
+                    response: {
+                        data: {
+                            validationErrors: {
+                                displayName: 'Cannot be null'
+                            }
+                        }
+                    }
+                })
+            }
+            const { queryByText } = setupForSubmit({ actions });
+            fireEvent.click(button);
+
+            const errorMessage = await waitForElement(() => queryByText('Cannot be null'));
+            expect(errorMessage).toBeInTheDocument();
         });
     });
 });
