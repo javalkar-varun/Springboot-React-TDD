@@ -1,4 +1,5 @@
 import React from 'react';
+import Input from '../components/input';
 
 export class UserSignupPage extends React.Component {
 
@@ -8,24 +9,36 @@ export class UserSignupPage extends React.Component {
         password: '',
         passwordRepeat: '',
         pendingApiCall: false,
-        errors: {}
+        errors: {},
+        passwordRepeatConfirmed: true
     };
 
     onChangeDisplayName = (event) => {
         const value = event.target.value;
-        this.setState({displayName: value});
+        const errors = { ...this.state.errors};
+        delete errors.displayName;
+        this.setState({displayName: value, errors});
     };
     onChangeUsername = (event) => {
         const value = event.target.value;
-        this.setState({username: value});
+        const errors = { ...this.state.errors};
+        delete errors.username;
+        this.setState({username: value, errors});
     };
     onChangePassword = (event) => {
         const value = event.target.value;
-        this.setState({password: value});
+        const passwordRepeatConfirmed = this.state.password === value;
+        const errors = { ...this.state.errors };
+        delete errors.password;
+        errors.passwordRepeat = passwordRepeatConfirmed ? '' : 'Does not match to password';
+        this.setState({password: value, passwordRepeatConfirmed, errors });
     };
     onChangePasswordRepeat = (event) => {
         const value = event.target.value;
-        this.setState({passwordRepeat: value});
+        const passwordRepeatConfirmed = this.state.password === value;
+        const errors = { ...this.state.errors };
+        errors.passwordRepeat = passwordRepeatConfirmed ? '' : 'Does not match to password';
+        this.setState({ passwordRepeat: value, passwordRepeatConfirmed, errors });
     };
 
     onClickSignup = () => {
@@ -57,49 +70,50 @@ export class UserSignupPage extends React.Component {
             <div className="container">
                 <h1 className="text-center">Sign Up</h1>
                 <div className="col-12 mb-3">
-                    <label>Display Name</label>
-                    <input 
-                    className="form-control"
+                    <Input 
+                    label="Display Name"
                     placeholder="Your display name"
                     value={this.state.displayName}
                     onChange={this.onChangeDisplayName}
-                     />
-                    <div className="invalid-feedback">
-                        {this.state.errors.displayName}
-                    </div> 
+                    hasError={this.state.errors.displayName && true}
+                    error={this.state.errors.displayName}
+                    /> 
                 </div>
                 <div className="col-12 mb-3">
-                    <label>Username</label>
-                    <input 
-                    className="form-control"
+                <Input 
+                    label="UserName"
                     placeholder="Your username"
                     value={this.state.username}
                     onChange={this.onChangeUsername}
+                    hasError={this.state.errors.username && true}
+                    error={this.state.errors.username}
                      />
                 </div>
                 <div className="col-12 mb-3">
-                    <label>Password</label>
-                    <input
-                    className="form-control"
+                <Input 
+                    label="Password"
                     placeholder="Your password" type="password"
                     value={this.state.password}
                     onChange={this.onChangePassword}
+                    hasError={this.state.errors.password && true}
+                    error={this.state.errors.password}
                     />
                 </div>
                 <div className="col-12 mb-3">
-                <label>Repeat password</label>
-                    <input 
-                    className="form-control"
+                <Input 
+                    label="Password Repeat"
                     placeholder="Repeat your password"type="password"
                     value={this.state.passwordRepeat}
                     onChange={this.onChangePasswordRepeat}
+                    hasError={this.state.errors.passwordRepeat && true}
+                    error={this.state.errors.passwordRepeat}
                     />
                 </div>
                 <div className="text-center">
                     <button 
                     className="btn btn-primary" 
                     onClick={this.onClickSignup}
-                    disabled={this.state.pendingApiCall} // when Signup is already clicked once, disabled=true
+                    disabled={this.state.pendingApiCall || !this.state.passwordRepeatConfirmed} // when Signup is already clicked once, disabled=true
                     >
                    {this.state.pendingApiCall && (
                    <div className="spinner-border text-light spinner-border-sm mr-sm-1">
