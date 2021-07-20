@@ -2,6 +2,7 @@ package com.hoaxify.hoaxify;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,10 @@ import org.springframework.http.client.support.BasicAuthenticationInterceptor;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.hoaxify.hoaxify.error.ApiError;
+import com.hoaxify.hoaxify.user.UserRepository;
+import com.hoaxify.hoaxify.user.UserService;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -23,6 +28,18 @@ public class LoginControllerTest {
 	
 	@Autowired
 	TestRestTemplate testRestTemplate;
+	
+	@Autowired
+	UserService userService;
+	
+	@Autowired
+	UserRepository userRepository;
+	
+	@Before
+	public void cleanup() {
+		userRepository.deleteAll();
+		testRestTemplate.getRestTemplate().getInterceptors().clear();
+	}
 	
 	@Test
 	public void postLogin_withoutUserCredentails_receiveUnauthorized() {
@@ -35,6 +52,34 @@ public class LoginControllerTest {
 		authenticate();
 		ResponseEntity<Object> response = login(Object.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+	}
+	
+	@Test
+	public void postLogin_withoutUserCredentials_receiveApiErrorWithoutValidationErrors() {
+		ResponseEntity<String> response = login(String.class);
+		assertThat(response.getBody().contains("validationErrors")).isFalse();
+	}
+	
+	@Test
+	public void postLogin_withIncorrectCredentials_receiveUnauthorizedWithoutWWWAuthenticationHeader() {
+		authenticate();
+		ResponseEntity<Object> response = login(Object.class);
+		assertThat(response.getHeaders().containsKey("WWW-Authenticate")).isFalse();
+	}
+	
+	@Test
+	public void postLogin_withValidCredentials_receiveOk() {
+		userService.save(TestUtil.createValidUser());
+		authenticate();
+		ResponseEntity<Object> response = login(Object.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+	}
+	
+	@Test
+	public void postLogin_withoutUserCredentails_receiveApiError() {
+		authenticate();
+		ResponseEntity<ApiError> response = login(ApiError.class);
+		assertThat(response.getBody().getUrl()).isEqualTo(API_1_0_LOGIN);
 	}
 
 	private void authenticate() {
