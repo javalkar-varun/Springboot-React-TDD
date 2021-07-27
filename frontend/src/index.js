@@ -4,7 +4,6 @@ import './index.css';
 import { HashRouter } from 'react-router-dom';
 import App from './containers/App';
 import reportWebVitals from './reportWebVitals';
-import * as apiCalls from './api/apiCalls';
 
 
 // ReactDOM.render(<LoginPage />, document.getElementById('root')
