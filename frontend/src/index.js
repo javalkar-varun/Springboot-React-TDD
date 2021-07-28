@@ -4,11 +4,19 @@ import './index.css';
 import { HashRouter } from 'react-router-dom';
 import App from './containers/App';
 import reportWebVitals from './reportWebVitals';
-import { Provider } from 'react-redux';
+import { Provider } from 'react-redux'; // Provider needs to store so import createStore below
 import { createStore } from 'redux';
 import authReducer from './redux/authReducer';
 
-const store = createStore(authReducer);
+const loggedInState = {
+    id: 1,
+    username: 'user1',
+    displayName: 'display1',
+    image: 'profile1.png',
+    password: 'P4ssword',
+    isLoggedIn: true
+};
+const store = createStore(authReducer, loggedInState);
 
 // In redux application we can have only one store.
 // And store is responsible for holding application state. It allows state to be updated via dispatch function.
