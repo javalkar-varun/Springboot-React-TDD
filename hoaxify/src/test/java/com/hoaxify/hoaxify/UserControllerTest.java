@@ -8,27 +8,26 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.junit.Before;
-import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.support.BasicAuthenticationInterceptor;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.web.client.HttpStatusCodeException;
 
 import com.hoaxify.hoaxify.error.ApiError;
 import com.hoaxify.hoaxify.shared.GenericResponse;
 import com.hoaxify.hoaxify.user.User;
 import com.hoaxify.hoaxify.user.UserRepository;
+import com.hoaxify.hoaxify.user.UserService;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -43,9 +42,20 @@ public class UserControllerTest {
 	@Autowired
 	UserRepository userRepository;
 	
+	@Autowired
+	UserService userService;
+	
 	@Before
 	public void cleanUp() {
 		userRepository.deleteAll();
+		/* each test will start with non authenticated testRestTemplate
+		 * The problem is, when the tests under UserController is running, junit is running each test in random order. \
+		 * And when you modify the testRestTemplate authentication header in your last test, than when running the next test,
+		 * lets say one of our previous user validation one, would be sending that request with authorization header having the
+		 * basic authentication in it. And that is causing that request to be rejected with 401, because when that test is running,
+		 * the database is most probably empty, that is why the authentication header is containing a non existing user which is leading that failure.
+		*/
+		testRestTemplate.getRestTemplate().getInterceptors().clear();
 	}
 	
 	@Test
@@ -309,6 +319,20 @@ public class UserControllerTest {
 		User user = TestUtil.createValidUser();
 		testRestTemplate.postForEntity(API_1_0_USERS, user, Object.class);
 		assertThat(userRepository.count()).isEqualTo(1);
+	}
+	
+	@Test
+	public void getUsers_whenUserLoggedIn_receivePageWithoutLoggedInUser() {
+		userService.save(TestUtil.createValidUser("user1"));
+		userService.save(TestUtil.createValidUser("user2"));
+		userService.save(TestUtil.createValidUser("user3"));
+		authenticate("user1");
+		ResponseEntity<TestPage<Object>> response = getUsers(new ParameterizedTypeReference<TestPage<Object>>() {});
+		assertThat(response.getBody().getTotalElements()).isEqualTo(2);
+	}
+	
+	private void authenticate(String username) {
+		testRestTemplate.getRestTemplate().getInterceptors().add(new BasicAuthenticationInterceptor(username, "P4ssword"));
 	}
 	
 	public <T> ResponseEntity<T> postSignup(Object request, Class<T> response) {
