@@ -3,10 +3,19 @@ import { render, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import App from './App';
 import { Provider } from 'react-redux';
-import { createStore } from 'redux';
-import authReducer from '../redux/authReducer';
+// import { createStore } from 'redux';
+// import authReducer from '../redux/authReducer';
 import axios from 'axios';
 import configureStore from '../redux/configureStore';
+import * as apiCalls from '../api/apiCalls';
+
+apiCalls.listUsers = jest.fn().mockResolvedValue({
+  data: {
+    content: [],
+    number: 0,
+    size: 3
+  }
+});
 
 beforeEach(() => {
     localStorage.clear();
@@ -240,3 +249,5 @@ describe('App', () => {
         expect(axiosAuthorization).toBeFalsy();
     });
 })
+
+console.error = () => {};
